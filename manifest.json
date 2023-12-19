@@ -1,14 +1,12 @@
 {
   "manifest_version": 3,
-  "name": "gmail Scraper",
+  "name": "HTML Scraper",
   "version": "1.0",
-  "description": "A simple Gmail scraper Chrome extension",
-  "permissions": [
-    "activeTab",
-    "storage"
-  ],
+  "description": "Scrape HTML data from the current webpage",
+  "permissions": ["activeTab"],
   "action": {
     "default_popup": "popup.html"
+    
   },
   
   "content_scripts": [
@@ -18,3 +16,7 @@
     }
   ]
 }
+
+
+
+
