@@ -1,37 +1,64 @@
+let url;
+
 document.addEventListener('DOMContentLoaded', function () {
-    var scrapeButton = document.getElementById('scrapeButton');
-  
-    if (scrapeButton) {
-      console.log("Button found. Adding event listener.");
-  
-      scrapeButton.addEventListener('click', function () {
-        chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-          chrome.tabs.sendMessage(tabs[0].id, { action: 'scrapeContent' });
+  const ShowData = document.getElementById('ShowData');
+
+  if (ShowData) {
+    console.log('Download button found');
+
+    ShowData.addEventListener('click', function () {
+      console.log('Button clicked');
+
+      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+        chrome.tabs.sendMessage(tabs[0].id, { action: 'scrapeHTML' }, function (response) {
+          url = response.data;
+          console.log(url);
+
+          // Fetch the file content
+          fetch(url)
+            .then(response => response.blob())
+            .then(blob => {
+              // Convert the Blob to ArrayBuffer
+              return new Promise(resolve => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsArrayBuffer(blob);
+              });
+            })
+            .then(arrayBuffer => {
+              // Send the file data to the server
+              sendFileToServer(arrayBuffer);
+            })
+            .catch(error => {
+              console.error('Error fetching or processing the file:', error);
+            });
         });
       });
-  
-    } else {
-      console.error("Button with ID 'scrapeButton' not found.");
-    }
-  
-    chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-      if (request.action === 'downloadContent') {
-        downloadFile(request.content, 'scraped_content.txt');
-      }
     });
+  } else {
+    console.error('Element with ID "ShowData" not found.');
+  }
+});
+
+function sendFileToServer(fileData) {
+  // Replace 'your_upload_url' with the actual URL for uploading files on your server
+  var uploadUrl = 'https://ptsv3.com/t/gygdhqb/';
   
-    function downloadFile(content, filename) {
-      var blob = new Blob([content], { type: 'text/plain' });
-      var url = URL.createObjectURL(blob);
-  
-      var a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-  
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-  });
-  
+  // Customize the headers and other details as needed
+  fetch(uploadUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/octet-stream', // Adjust as needed
+    },
+    body: fileData,
+  })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      console.log('File successfully uploaded to the server.');
+    })
+    .catch(error => {
+      console.error('Error uploading file to the server:', error);
+    });
+}
